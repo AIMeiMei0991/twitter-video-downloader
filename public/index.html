@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X 视频下载工具</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1 class="vercel-animation" id="titleText">
+          <span class="text-container">
+            <span class="text-front">X 视频下载工具</span>
+            <span class="text-back">X 视频下载工具</span>
+          </span>
+        </h1>
+        <p>支持批量下载 X/Twitter 视频，选择您需要的画质</p>
+      </div>
+    </header>
+
+    <!-- Input Area -->
+    <section class="input-section">
+      <label for="urlInput" class="input-label">粘贴推文链接</label>
+      <div class="input-wrapper">
+        <textarea
+          id="urlInput"
+          class="url-input"
+          placeholder="在此粘贴一个或多个 X/Twitter 视频链接，每行一个&#10;&#10;例如：https://x.com/username/status/1234567890"
+          rows="4"
+          spellcheck="false"
+        ></textarea>
+        <div class="input-hint">
+          <span id="urlCount">0 个链接</span>
+          <button id="clearBtn" class="btn-clear" title="清除">清除</button>
+        </div>
+      </div>
+      <button id="extractBtn" class="btn-primary" disabled>
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <span id="btnText">解析视频</span>
+      </button>
+    </section>
+
+    <!-- Error Banner -->
+    <div id="errorBanner" class="error-banner hidden">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <span id="errorMessage"></span>
+    </div>
+
+    <!-- Results Area -->
+    <section id="resultsSection" class="results-section hidden">
+      <div class="results-header">
+        <h2>解析结果</h2>
+        <span id="resultCount" class="result-count"></span>
+      </div>
+      <div id="resultsContainer" class="results-container"></div>
+    </section>
+
+    <!-- Instructions -->
+    <section class="instructions">
+      <h3>使用说明</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>复制链接</strong>
+            <span>在 X/Twitter 上找到包含视频的推文，点击"分享"复制链接</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>粘贴解析</strong>
+            <span>将链接粘贴到上方输入框，支持一次粘贴多个链接（每行一个）</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>选择画质</strong>
+            <span>解析完成后选择视频画质，点击下载按钮即可保存到本地</span>
+          </div>
+        </div>
+      </div>
+      <div class="tips">
+        <p>支持链接格式：<code>https://x.com/用户名/status/推文ID</code> 或 <code>https://twitter.com/用户名/status/推文ID</code></p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
