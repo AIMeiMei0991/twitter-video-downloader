@@ -217,7 +217,6 @@ const ICON_DL     = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
 const ICON_PLAY   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
 const ICON_PAUSE  = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 const ICON_STOP   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
-const ICON_FOLDER = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
 
 /* ===== DownloadTask: Fetch streaming with pause/resume/cancel ===== */
 class DownloadTask {
@@ -327,14 +326,10 @@ function setButtons(card, state) {
         <button class="btn-sm btn-resume" onclick="resumeDownload(this)">${ICON_PLAY} 继续</button>
         <button class="btn-sm btn-stop"   onclick="cancelDownload(this)">${ICON_STOP} 停止</button>`;
       break;
-    case 'done': {
-      const hasSaved = !!downloadTasks.get(card)?.savedPath;
+    case 'done':
       group.innerHTML = `
-        ${hasSaved ? `<button class="btn-sm btn-play"   onclick="playFile(this)">${ICON_PLAY} 播放</button>` : ''}
-        ${hasSaved ? `<button class="btn-sm btn-folder" onclick="revealFile(this)">${ICON_FOLDER} 文件夹</button>` : ''}
         <button class="btn-sm btn-download" onclick="downloadVideo(this)">${ICON_DL} 重新下载</button>`;
       break;
-    }
     default: // idle / cancelled / error
       group.innerHTML = `
         <button class="btn-download" onclick="downloadVideo(this)">${ICON_DL} 下载</button>`;
@@ -359,17 +354,6 @@ window.cancelDownload = function (btn) {
   if (pb) pb.style.display = 'none';
 };
 
-window.playFile = function (btn) {
-  const task = downloadTasks.get(btn.closest('.video-card'));
-  if (!task?.savedPath) return;
-  fetch(`/api/play?path=${encodeURIComponent(task.savedPath)}`);
-};
-
-window.revealFile = function (btn) {
-  const task = downloadTasks.get(btn.closest('.video-card'));
-  if (!task?.savedPath) return;
-  fetch(`/api/reveal?path=${encodeURIComponent(task.savedPath)}`);
-};
 
 /* ===== Download Handler ===== */
 window.downloadVideo = async function (btn) {
@@ -456,36 +440,18 @@ window.downloadVideo = async function (btn) {
     }
   };
 
-  task.ondone = async (blob) => {
+  task.ondone = (blob) => {
     fill.style.width = '100%';
     fill.classList.add('progress-fill--done');
     pct.textContent   = '100%';
     speed.textContent = '';
     eta.textContent   = '';
-    size.textContent  = '保存中...';
+    size.textContent  = '下载完成 ✓';
 
-    // Save to server's ./downloads/ folder
-    try {
-      const resp = await fetch(`/api/save-local?filename=${encodeURIComponent(filename)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'video/mp4' },
-        body: blob,
-      });
-      const data = await resp.json();
-      if (data.path) {
-        task.savedPath = data.path;
-        size.textContent = '已保存 ✓';
-      } else {
-        throw new Error(data.error || '保存失败');
-      }
-    } catch (e) {
-      // Fallback: trigger browser download
-      const u = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), { href: u, download: filename });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(u), 10000);
-      size.textContent = '已下载到默认文件夹';
-    }
+    const u = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: u, download: filename });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(u), 10000);
 
     setButtons(card, 'done');
   };

@@ -1,15 +1,9 @@
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
-const fs = require('fs');
-const { exec } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Downloads directory (created on startup)
-const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
-fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -290,51 +284,6 @@ app.get('/api/download', async (req, res) => {
       res.status(500).json({ error: '视频下载失败，请稍后重试' });
     }
   }
-});
-
-// POST /api/save-local - receive blob from browser, save to ./downloads/
-app.post('/api/save-local', (req, res) => {
-  const { filename } = req.query;
-  const safeFilename = (filename || `twitter_video_${Date.now()}.mp4`)
-    .replace(/[^a-zA-Z0-9_\-.]/g, '_');
-  const filePath = path.join(DOWNLOADS_DIR, safeFilename);
-
-  const writeStream = fs.createWriteStream(filePath);
-  req.pipe(writeStream);
-
-  writeStream.on('finish', () => res.json({ path: filePath }));
-  writeStream.on('error', (err) => {
-    console.error('Save error:', err.message);
-    res.status(500).json({ error: '保存文件失败' });
-  });
-  req.on('error', (err) => {
-    console.error('Upload error:', err.message);
-    writeStream.destroy();
-  });
-});
-
-// Security helper: path must be inside DOWNLOADS_DIR
-function safeDownloadsPath(p) {
-  const resolved = path.resolve(p);
-  return resolved.startsWith(DOWNLOADS_DIR) ? resolved : null;
-}
-
-// GET /api/reveal - reveal file in Finder (macOS)
-app.get('/api/reveal', (req, res) => {
-  const filePath = safeDownloadsPath(req.query.path || '');
-  if (!filePath) return res.status(403).json({ error: 'Invalid path' });
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: '文件不存在' });
-  exec(`open -R "${filePath}"`);
-  res.json({ ok: true });
-});
-
-// GET /api/play - open file with system default player (macOS)
-app.get('/api/play', (req, res) => {
-  const filePath = safeDownloadsPath(req.query.path || '');
-  if (!filePath) return res.status(403).json({ error: 'Invalid path' });
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: '文件不存在' });
-  exec(`open "${filePath}"`);
-  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {
