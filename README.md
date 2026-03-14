@@ -16,29 +16,6 @@
 - **后端**：Node.js, Express
 - **依赖**：axios, cheerio, puppeteer
 
-## 快速开始
-
-### 1. 克隆仓库
-
-```bash
-git clone https://github.com/[your-username]/twitter-video-downloader.git
-cd twitter-video-downloader
-```
-
-### 2. 安装依赖
-
-```bash
-npm install
-```
-
-### 3. 启动服务器
-
-```bash
-npm start
-```
-
-服务器将在 `http://localhost:3000` 启动
-
 ## 使用方法
 
 1. **复制链接**：在 X/Twitter 上找到包含视频的推文，点击"分享"复制链接
@@ -64,29 +41,6 @@ twitter-video-downloader/
 ├── package.json        # 项目配置
 └── .gitignore          # Git忽略文件
 ```
-
-## 部署选项
-
-### Vercel
-
-1. 登录 Vercel 账号
-2. 点击 "New Project"
-3. 选择你的 GitHub 仓库
-4. 点击 "Deploy"
-
-### Heroku
-
-1. 登录 Heroku 账号
-2. 点击 "New" > "Create new app"
-3. 连接你的 GitHub 仓库
-4. 点击 "Deploy Branch"
-
-### Netlify
-
-1. 登录 Netlify 账号
-2. 点击 "Add new site" > "Import an existing project"
-3. 选择你的 GitHub 仓库
-4. 点击 "Deploy site"
 
 ## 注意事项
 
