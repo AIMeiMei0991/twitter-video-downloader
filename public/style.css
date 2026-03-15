@@ -716,30 +716,82 @@ body {
 .skeleton-line.long { width: 90%; }
 
 /* ===== Responsive ===== */
-@media (max-width: 480px) {
-  .header {
-    gap: 12px;
+@media (max-width: 600px) {
+  .container {
+    gap: 16px;
   }
 
-  .header-text h1 {
-    font-size: 1.25rem;
+  body {
+    padding: 16px 12px 40px;
+  }
+
+  /* Stack card vertically */
+  .card-thumb-row {
+    flex-direction: column;
   }
 
   .card-thumbnail {
-    width: 100px;
+    width: 100%;
+    border-radius: var(--radius) var(--radius) 0 0;
+    min-height: 180px;
+  }
+
+  .card-thumbnail img {
+    min-height: 180px;
+  }
+
+  .thumb-placeholder {
+    min-height: 180px;
+  }
+
+  .card-info {
+    padding: 12px 14px 8px;
   }
 
   .card-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
 
   .csel {
     min-width: unset;
   }
 
-  .btn-download {
+  .dl-btn-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-download,
+  .btn-sm {
+    flex: 1;
     justify-content: center;
+  }
+
+  .progress-meta {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  .progress-size {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .header {
+    gap: 10px;
+  }
+
+  .header-text h1 {
+    font-size: 1.15rem;
+  }
+
+  .header-icon {
+    width: 42px;
+    height: 42px;
   }
 }
 

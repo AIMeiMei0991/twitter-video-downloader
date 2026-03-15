@@ -217,6 +217,11 @@ const ICON_DL     = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
 const ICON_PLAY   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
 const ICON_PAUSE  = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 const ICON_STOP   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
+const ICON_SAVE   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 17l4 4 4-4m-4-5v9"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`;
+
+function isMobile() {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
 
 /* ===== DownloadTask: Fetch streaming with pause/resume/cancel ===== */
 class DownloadTask {
@@ -327,8 +332,15 @@ function setButtons(card, state) {
         <button class="btn-sm btn-stop"   onclick="cancelDownload(this)">${ICON_STOP} 停止</button>`;
       break;
     case 'done':
-      group.innerHTML = `
-        <button class="btn-sm btn-download" onclick="downloadVideo(this)">${ICON_DL} 重新下载</button>`;
+      if (isMobile()) {
+        group.innerHTML = `
+          <button class="btn-sm btn-play" onclick="saveToPhotos(this)">${ICON_SAVE} 存到相册</button>
+          <button class="btn-sm btn-download" onclick="downloadVideo(this)">${ICON_DL} 重新下载</button>`;
+      } else {
+        group.innerHTML = `
+          <button class="btn-sm btn-play" onclick="playBlob(this)">${ICON_PLAY} 播放</button>
+          <button class="btn-sm btn-download" onclick="downloadVideo(this)">${ICON_DL} 重新下载</button>`;
+      }
       break;
     default: // idle / cancelled / error
       group.innerHTML = `
@@ -352,6 +364,38 @@ window.cancelDownload = function (btn) {
   task.cancel();
   const pb = card.querySelector('.download-progress');
   if (pb) pb.style.display = 'none';
+};
+
+window.playBlob = function (btn) {
+  const task = downloadTasks.get(btn.closest('.video-card'));
+  if (!task?.blob) return;
+  const u = URL.createObjectURL(task.blob);
+  window.open(u, '_blank');
+  setTimeout(() => URL.revokeObjectURL(u), 120000);
+};
+
+window.saveToPhotos = async function (btn) {
+  const task = downloadTasks.get(btn.closest('.video-card'));
+  if (!task?.blob) return;
+  const filename = task.filename || `twitter_video_${Date.now()}.mp4`;
+  const file = new File([task.blob], filename, { type: 'video/mp4' });
+
+  const fallback = () => {
+    const u = URL.createObjectURL(task.blob);
+    const a = Object.assign(document.createElement('a'), { href: u, download: filename });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(u), 10000);
+  };
+
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename });
+    } catch (e) {
+      if (e.name !== 'AbortError') fallback();
+    }
+  } else {
+    fallback();
+  }
 };
 
 
@@ -405,6 +449,7 @@ window.downloadVideo = async function (btn) {
 
   // --- 创建任务 ---
   const task = new DownloadTask(downloadUrl);
+  task.filename = filename;
   downloadTasks.set(card, task);
 
   // 速度追踪（EMA）
@@ -446,12 +491,17 @@ window.downloadVideo = async function (btn) {
     pct.textContent   = '100%';
     speed.textContent = '';
     eta.textContent   = '';
-    size.textContent  = '下载完成 ✓';
 
-    const u = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: u, download: filename });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(u), 10000);
+    if (isMobile()) {
+      size.textContent = '完成，点击存到相册 ↓';
+    } else {
+      // Desktop: trigger browser download immediately
+      const u = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href: u, download: filename });
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(u), 10000);
+      size.textContent = '下载完成 ✓';
+    }
 
     setButtons(card, 'done');
   };
