@@ -1,5 +1,3 @@
-
-
 /* ===== DOM References ===== */
 const urlInput = document.getElementById('urlInput');
 const urlCount = document.getElementById('urlCount');
@@ -47,20 +45,34 @@ function hideError() {
   errorBanner.classList.add('hidden');
 }
 
+const LOADING_MSGS = [
+  '解析视频链接...',
+  '连接 X 服务器...',
+  '提取视频格式...',
+  '获取下载地址...',
+];
+let _loadingTimer = null;
+
 function setLoading(loading) {
   if (loading) {
     extractBtn.classList.add('loading');
     extractBtn.disabled = true;
-    btnText.textContent = '解析中...';
+    let msgIdx = 0;
+    btnText.textContent = LOADING_MSGS[0];
+    _loadingTimer = setInterval(() => {
+      msgIdx = (msgIdx + 1) % LOADING_MSGS.length;
+      btnText.textContent = LOADING_MSGS[msgIdx];
+    }, 1800);
     extractBtn.querySelector('.btn-icon').innerHTML = `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
       </svg>`;
   } else {
+    clearInterval(_loadingTimer);
     extractBtn.classList.remove('loading');
     btnText.textContent = '解析视频';
     extractBtn.querySelector('.btn-icon').innerHTML = `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/>
         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>`;
@@ -88,6 +100,8 @@ function showSkeletons(count) {
 }
 
 /* ===== Card Rendering ===== */
+let _cselCounter = 0;
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -97,16 +111,18 @@ function escapeHtml(str) {
 }
 
 function renderVideoCard(result) {
+  const cselId = `csel-${++_cselCounter}`;
   const qualityItems = result.qualities
     .map((q, i) =>
-      `<div class="csel-option${i === 0 ? ' selected' : ''}" data-index="${i}" onclick="selectQuality(this)">${escapeHtml(q.label)}</div>`
+      `<div class="csel-option${i === 0 ? ' selected' : ''}" data-index="${i}" onclick="selectQuality(this)" role="option" aria-selected="${i === 0 ? 'true' : 'false'}" tabindex="-1">${escapeHtml(q.label)}</div>`
     )
     .join('');
   const firstLabel = escapeHtml(result.qualities[0]?.label || '');
 
+  const thumbAlt = escapeHtml(result.author) + ' 的视频缩略图';
   const thumbnail = result.thumbnail
-    ? `<img src="${escapeHtml(result.thumbnail)}" alt="缩略图" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'thumb-placeholder\\'><svg viewBox=\\'0 0 24 24\\' width=\\'32\\' height=\\'32\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'2\\' y=\\'2\\' width=\\'20\\' height=\\'20\\' rx=\\'4\\'/><polygon points=\\'10,8 16,12 10,16\\'/></svg></div>'" />`
-    : `<div class="thumb-placeholder"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="4"/><polygon points="10,8 16,12 10,16"/></svg></div>`;
+    ? `<img src="${escapeHtml(result.thumbnail)}" alt="${thumbAlt}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'thumb-placeholder\\'><svg aria-hidden=\\'true\\' viewBox=\\'0 0 24 24\\' width=\\'32\\' height=\\'32\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'2\\' y=\\'2\\' width=\\'20\\' height=\\'20\\' rx=\\'4\\'/><polygon points=\\'10,8 16,12 10,16\\'/></svg></div>'" />`
+    : `<div class="thumb-placeholder"><svg aria-hidden="true" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="4"/><polygon points="10,8 16,12 10,16"/></svg></div>`;
 
   const handleText = result.screenName ? `@${escapeHtml(result.screenName)}` : '';
 
@@ -115,7 +131,7 @@ function renderVideoCard(result) {
       <div class="card-thumb-row">
         <div class="card-thumbnail">
           ${thumbnail}
-          <div class="play-overlay">
+          <div class="play-overlay" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="36" height="36" fill="white">
               <circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.5)"/>
               <polygon points="10,8 18,12 10,16" fill="white"/>
@@ -132,15 +148,16 @@ function renderVideoCard(result) {
       </div>
       <div class="card-actions">
         <div class="csel" data-value="0">
-          <button class="csel-trigger" onclick="toggleCsel(this)" type="button">
+          <button class="csel-trigger" onclick="toggleCsel(this)" type="button"
+                  aria-haspopup="listbox" aria-expanded="false" aria-controls="${cselId}">
             <span class="csel-label">${firstLabel}</span>
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-          <div class="csel-dropdown hidden">${qualityItems}</div>
+          <div class="csel-dropdown hidden" role="listbox" id="${cselId}">${qualityItems}</div>
         </div>
         <div class="dl-btn-group">
           <button class="btn-download" onclick="downloadVideo(this)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
@@ -156,7 +173,7 @@ function renderVideoCard(result) {
 function renderErrorCard(result) {
   return `
     <div class="error-card">
-      <div class="error-icon">
+      <div class="error-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
         </svg>
@@ -191,6 +208,11 @@ function renderResults(results) {
       resultsContainer.insertAdjacentHTML('beforeend', renderVideoCard(result));
     }
   });
+
+  // Apply stagger index for card entrance animation
+  resultsContainer.querySelectorAll('.video-card, .error-card').forEach((card, i) => {
+    card.style.setProperty('--i', i);
+  });
 }
 
 /* ===== Download Helpers ===== */
@@ -213,11 +235,11 @@ function formatSize(bytes) {
   return `${bytes} B`;
 }
 
-const ICON_DL     = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
-const ICON_PLAY   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
-const ICON_PAUSE  = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-const ICON_STOP   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
-const ICON_SAVE   = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 17l4 4 4-4m-4-5v9"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`;
+const ICON_DL     = `<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const ICON_PLAY   = `<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+const ICON_PAUSE  = `<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+const ICON_STOP   = `<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
+const ICON_SAVE   = `<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 17l4 4 4-4m-4-5v9"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`;
 
 function isMobile() {
   return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -256,7 +278,10 @@ class DownloadTask {
 
     if (!response.ok && response.status !== 206) {
       this.state = 'error';
-      this.onerror?.(`下载失败 (HTTP ${response.status})`);
+      const msg = response.status === 403 ? '无权限下载此视频'
+                : response.status === 404 ? '视频已失效或被删除'
+                : '下载失败，请稍后重试';
+      this.onerror?.(msg);
       return;
     }
 
@@ -318,7 +343,6 @@ const downloadTasks = new WeakMap();
 /* ===== Button group state management ===== */
 function setButtons(card, state) {
   const group = card.querySelector('.dl-btn-group');
-  const task  = downloadTasks.get(card);
 
   switch (state) {
     case 'downloading':
@@ -492,15 +516,17 @@ window.downloadVideo = async function (btn) {
     speed.textContent = '';
     eta.textContent   = '';
 
+    const checkSvg = `<svg aria-hidden="true" class="check-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="var(--success)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline class="check-path" points="2,8 6,12 14,4"/></svg>`;
+
     if (isMobile()) {
-      size.textContent = '完成，点击存到相册 ↓';
+      size.innerHTML = `完成，点击存到相册&nbsp;${checkSvg}`;
     } else {
       // Desktop: trigger browser download immediately
       const u = URL.createObjectURL(blob);
       const a = Object.assign(document.createElement('a'), { href: u, download: filename });
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(u), 10000);
-      size.textContent = '下载完成 ✓';
+      size.innerHTML = `下载完成&nbsp;${checkSvg}`;
     }
 
     setButtons(card, 'done');
@@ -527,23 +553,36 @@ window.toggleCsel = function (trigger) {
   // Close all open dropdowns first
   document.querySelectorAll('.csel-dropdown:not(.hidden)').forEach((d) => {
     d.classList.add('hidden');
+    const t = d.closest('.csel').querySelector('.csel-trigger');
     d.closest('.csel').classList.remove('open');
+    t.setAttribute('aria-expanded', 'false');
   });
   if (!isOpen) {
     dropdown.classList.remove('hidden');
     csel.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
+    // Move focus to the currently selected option
+    const focused = dropdown.querySelector('.csel-option.selected') || dropdown.querySelector('.csel-option');
+    focused?.focus();
   }
 };
 
-window.selectQuality = function (option) {
+window.selectQuality = function (option, returnFocus = true) {
   const dropdown = option.closest('.csel-dropdown');
   const csel = option.closest('.csel');
-  dropdown.querySelectorAll('.csel-option').forEach((o) => o.classList.remove('selected'));
+  const trigger = csel.querySelector('.csel-trigger');
+  dropdown.querySelectorAll('.csel-option').forEach((o) => {
+    o.classList.remove('selected');
+    o.setAttribute('aria-selected', 'false');
+  });
   option.classList.add('selected');
+  option.setAttribute('aria-selected', 'true');
   csel.dataset.value = option.dataset.index;
   csel.querySelector('.csel-label').textContent = option.textContent;
   dropdown.classList.add('hidden');
   csel.classList.remove('open');
+  trigger.setAttribute('aria-expanded', 'false');
+  if (returnFocus) trigger.focus();
 };
 
 // Close dropdown on outside click
@@ -551,8 +590,78 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.csel')) {
     document.querySelectorAll('.csel-dropdown:not(.hidden)').forEach((d) => {
       d.classList.add('hidden');
+      d.closest('.csel').querySelector('.csel-trigger').setAttribute('aria-expanded', 'false');
       d.closest('.csel').classList.remove('open');
     });
+  }
+});
+
+// Keyboard navigation for quality select
+resultsContainer.addEventListener('keydown', (e) => {
+  const trigger = e.target.closest('.csel-trigger');
+  const option  = e.target.closest('.csel-option');
+
+  if (trigger) {
+    const csel = trigger.closest('.csel');
+    const dropdown = csel.querySelector('.csel-dropdown');
+    const isOpen = csel.classList.contains('open');
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleCsel(trigger);
+    } else if (!isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      toggleCsel(trigger);
+    } else if (isOpen && e.key === 'Escape') {
+      e.preventDefault();
+      dropdown.classList.add('hidden');
+      csel.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.focus();
+    }
+  }
+
+  if (option) {
+    const dropdown = option.closest('.csel-dropdown');
+    const csel     = option.closest('.csel');
+    const trigger  = csel.querySelector('.csel-trigger');
+    const options  = Array.from(dropdown.querySelectorAll('.csel-option'));
+    const idx      = options.indexOf(option);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      options[Math.min(idx + 1, options.length - 1)]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (idx === 0) {
+        dropdown.classList.add('hidden');
+        csel.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.focus();
+      } else {
+        options[idx - 1]?.focus();
+      }
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      selectQuality(option);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      dropdown.classList.add('hidden');
+      csel.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.focus();
+    } else if (e.key === 'Tab') {
+      // Close dropdown and let browser handle natural tab order
+      dropdown.classList.add('hidden');
+      csel.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      options[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      options[options.length - 1]?.focus();
+    }
   }
 });
 
@@ -562,7 +671,7 @@ async function extractVideos() {
   const urls = getUrls().filter(isValidTwitterUrl);
 
   if (urls.length === 0) {
-    showError('未检测到有效的 X/Twitter 链接，请检查链接格式');
+    showError('请粘贴有效的 X/Twitter 视频链接');
     return;
   }
 
@@ -578,7 +687,7 @@ async function extractVideos() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || `服务器错误 (${response.status})`);
+      throw new Error(data.error || '服务器暂时不可用，请稍后重试');
     }
 
     const data = await response.json();
@@ -593,7 +702,14 @@ async function extractVideos() {
 
 /* ===== Event Listeners ===== */
 urlInput.addEventListener('input', updateUrlCount);
-urlInput.addEventListener('paste', () => setTimeout(updateUrlCount, 0));
+urlInput.addEventListener('paste', () => {
+  setTimeout(() => {
+    updateUrlCount();
+    urlInput.classList.remove('url-input--pasted');
+    void urlInput.offsetWidth; // force reflow to restart animation
+    urlInput.classList.add('url-input--pasted');
+  }, 0);
+});
 
 clearBtn.addEventListener('click', () => {
   urlInput.value = '';
@@ -602,7 +718,29 @@ clearBtn.addEventListener('click', () => {
   resultsSection.classList.add('hidden');
 });
 
-extractBtn.addEventListener('click', extractVideos);
+extractBtn.addEventListener('click', (e) => {
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple-effect';
+  const rect = extractBtn.getBoundingClientRect();
+  ripple.style.left = `${e.clientX - rect.left}px`;
+  ripple.style.top  = `${e.clientY - rect.top}px`;
+  extractBtn.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove());
+  extractVideos();
+});
+
+// Ripple on any download button inside results
+resultsContainer.addEventListener('click', (e) => {
+  const dlBtn = e.target.closest('.btn-download');
+  if (!dlBtn || dlBtn.disabled) return;
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple-effect';
+  const rect = dlBtn.getBoundingClientRect();
+  ripple.style.left = `${e.clientX - rect.left}px`;
+  ripple.style.top  = `${e.clientY - rect.top}px`;
+  dlBtn.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove());
+});
 
 urlInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -612,3 +750,13 @@ urlInput.addEventListener('keydown', (e) => {
 
 /* ===== Init ===== */
 updateUrlCount();
+
+/* ===== Console Easter Egg ===== */
+console.log(
+  '%c  X 视频下载工具  ',
+  'background:#1d9bf0;color:#fff;font-size:14px;font-weight:700;padding:4px 12px;border-radius:6px;letter-spacing:1px;'
+);
+console.log(
+  '%c你发现了这里 👀  欢迎反馈建议！',
+  'color:#8b90a7;font-size:11px;'
+);

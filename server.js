@@ -171,7 +171,7 @@ app.post('/api/extract', async (req, res) => {
         const tweet = await fetchTweetData(tweetId);
 
         if (!tweet) {
-          return { url: trimmed, error: '推文不存在、已被删除或不含视频' };
+          return { url: trimmed, error: '找不到该推文，可能已被删除或不含视频' };
         }
 
         const variants = tweet.variants
@@ -208,7 +208,7 @@ app.post('/api/extract', async (req, res) => {
           return { url: trimmed, error: '请求超时，请稍后重试' };
         }
         console.error(`Error fetching tweet ${tweetId}:`, err.message);
-        return { url: trimmed, error: '获取推文数据失败，请稍后重试' };
+        return { url: trimmed, error: '视频解析失败，请稍后重试' };
       }
     })
   );
@@ -288,5 +288,4 @@ app.get('/api/download', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Twitter Video Downloader running at http://localhost:${PORT}`);
-  console.log(`Downloads folder: ${DOWNLOADS_DIR}`);
 });

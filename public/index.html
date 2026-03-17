@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <!-- Header -->
     <header class="header">
       <div class="header-icon">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
         </svg>
       </div>
@@ -19,7 +19,7 @@
         <h1 class="vercel-animation" id="titleText">
           <span class="text-container">
             <span class="text-front">X 视频下载工具</span>
-            <span class="text-back">X 视频下载工具</span>
+            <span class="text-back" lang="en">X Video Downloader</span>
           </span>
         </h1>
         <p>支持批量下载 X/Twitter 视频，选择您需要的画质</p>
@@ -33,7 +33,7 @@
         <textarea
           id="urlInput"
           class="url-input"
-          placeholder="在此粘贴一个或多个 X/Twitter 视频链接，每行一个&#10;&#10;例如：https://x.com/username/status/1234567890"
+          placeholder="在此粘贴一个或多个 X/Twitter 视频链接，每行一个。例如：https://x.com/username/status/1234567890"
           rows="4"
           spellcheck="false"
         ></textarea>
@@ -43,7 +43,7 @@
         </div>
       </div>
       <button id="extractBtn" class="btn-primary" disabled>
-        <span class="btn-icon">
+        <span class="btn-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -54,8 +54,8 @@
     </section>
 
     <!-- Error Banner -->
-    <div id="errorBanner" class="error-banner hidden">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+    <div id="errorBanner" class="error-banner hidden" role="alert" aria-atomic="true">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
       </svg>
       <span id="errorMessage"></span>
@@ -65,7 +65,7 @@
     <section id="resultsSection" class="results-section hidden">
       <div class="results-header">
         <h2>解析结果</h2>
-        <span id="resultCount" class="result-count"></span>
+        <span id="resultCount" class="result-count" aria-live="polite" aria-atomic="true"></span>
       </div>
       <div id="resultsContainer" class="results-container"></div>
     </section>
@@ -84,7 +84,7 @@
         <div class="step">
           <div class="step-num">2</div>
           <div class="step-text">
-            <strong>粘贴解析</strong>
+            <strong>粘贴链接</strong>
             <span>将链接粘贴到上方输入框，支持一次粘贴多个链接（每行一个）</span>
           </div>
         </div>
@@ -100,7 +100,7 @@
         <p>支持链接格式：<code>https://x.com/用户名/status/推文ID</code> 或 <code>https://twitter.com/用户名/status/推文ID</code></p>
       </div>
     </section>
-  </div>
+  </main>
 
   <script src="app.js"></script>
 </body>

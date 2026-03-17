@@ -17,3 +17,10 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# AI tool config (local only)
+.agents/
+.claude/
+.trae/
+skills/
+skills-lock.json
